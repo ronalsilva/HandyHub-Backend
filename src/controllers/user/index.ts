@@ -64,7 +64,6 @@ async function userRoutes(server: FastifyInstance) {
 				const { password, salt, ...rest } = user;
 				return { accessToken: request.jwt.sign(rest) };
 			}
-		
 			return reply.code(401).send({
 				message: "Invalid email or password",
 			});
