@@ -25,13 +25,18 @@ const hash_1 = require("../../utils/hash");
 const userSchema_1 = require("./schema/userSchema");
 function userRoutes(server) {
     return __awaiter(this, void 0, void 0, function* () {
-        server.post("/", {
+        server.post("/create", {
             schema: {
+                tags: ['User'],
+                summary: 'Create a new user',
+                // security: [{ apiKey: [AuthMidleware] }],
                 body: userSchema_1.RequestUser,
                 response: {
                     201: userSchema_1.ResponseUser,
                 },
             },
+            // onRequest: [AuthMidleware]
+            // preHandler: [server.authenticate],
         }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
             const body = request.body;
             try {
@@ -45,9 +50,11 @@ function userRoutes(server) {
         }));
         server.post("/login", {
             schema: {
+                tags: ['User'],
+                summary: 'Login user',
                 body: userSchema_1.RequestUserLogin,
                 response: {
-                    200: { accessToken: { type: 'string' } },
+                    200: userSchema_1.ResponseUserLogin,
                 },
             },
         }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
@@ -63,17 +70,34 @@ function userRoutes(server) {
             });
             if (correctPassword) {
                 const { password, salt } = user, rest = __rest(user, ["password", "salt"]);
-                return { accessToken: request.jwt.sign(rest) };
+                return { user: { id: user.id, name: user.name, email: user.email }, accessToken: request.jwt.sign(rest) };
             }
             return reply.code(401).send({
                 message: "Invalid email or password",
             });
         }));
-        server.get("/", {
-            preHandler: [server.authenticate],
+        server.get("/:id", {
+            schema: {
+                tags: ['User'],
+                summary: 'Search user',
+                params: {
+                    id: { type: 'number' }
+                },
+                response: {
+                    200: userSchema_1.ResponseUser,
+                },
+            },
+            // preHandler: [AuthMidleware]
         }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
-            const users = yield (0, user_1.findUsers)();
-            return users;
+            const params = request.params;
+            const user = yield (0, user_1.findUserById)(params.id);
+            if (!user) {
+                return reply.code(404).send({
+                    code: 404,
+                    message: `User with ID: ${params.id} was not found`,
+                });
+            }
+            return user;
         }));
     });
 }

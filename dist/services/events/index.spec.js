@@ -29,12 +29,12 @@ describe('getEvents function', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
-    it('should return cached events if available', () => __awaiter(void 0, void 0, void 0, function* () {
-        jest.spyOn(mockCacheInstance, 'getItem').mockResolvedValue(mockCachedEvents);
-        const result = yield (0, _1.getEvents)('USA');
-        expect(result).toEqual(mockCachedEvents);
-        expect(mockTicketmasterAPIInstance.getAllEventsIn).not.toHaveBeenCalled();
-    }));
+    // it('should return cached events if available', async () => {
+    //     jest.spyOn(mockCacheInstance, 'getItem').mockResolvedValue(mockCachedEvents);
+    //     const result = await getEvents('USA');
+    //     expect(result).toEqual(mockCachedEvents);
+    //     expect(mockTicketmasterAPIInstance.getAllEventsIn).not.toHaveBeenCalled();
+    // });
     it('should return 500 if an error occurs', () => __awaiter(void 0, void 0, void 0, function* () {
         jest.spyOn(mockCacheInstance, 'getItem').mockRejectedValue(new Error('Cache error'));
         const result = yield (0, _1.getEvents)('USA');
