@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RequestUserLogin = exports.RequestUser = exports.ResponseUser = void 0;
+exports.ResponseUserLogin = exports.RequestUserLogin = exports.RequestUser = exports.ResponseUser = void 0;
 exports.ResponseUser = {
+    id: { type: 'string' },
     email: { type: 'string' },
-    password: { type: 'string' },
     name: { type: 'string' },
 };
 exports.RequestUser = {
@@ -12,7 +12,16 @@ exports.RequestUser = {
     email: { type: 'string' },
     password: { type: 'string' },
 };
+//Login
 exports.RequestUserLogin = {
     email: { type: 'string' },
     password: { type: 'string' }
+};
+exports.ResponseUserLogin = {
+    user: {
+        id: { type: 'string', require },
+        email: { type: 'string' },
+        name: { type: 'string' },
+    },
+    accessToken: { type: 'string' }
 };

@@ -41,15 +41,24 @@ function buildServer() {
         return next();
     });
     server.register(fastify_swagger_1.default, (0, fastify_zod_1.withRefResolver)({
-        routePrefix: "/docs",
+        routePrefix: "/swagger",
         exposeRoute: true,
         staticCSP: true,
         openapi: {
             info: {
-                title: "Fastify API",
-                description: "API for some products",
+                title: "HandyHub APIs",
+                description: "",
                 version: '1.0.0',
             },
+            components: {
+                securitySchemes: {
+                    apiKey: {
+                        type: 'apiKey',
+                        name: 'authenticate',
+                        in: 'header'
+                    }
+                }
+            }
         },
     }));
     server.register(user_1.default, { prefix: "api/users" });
