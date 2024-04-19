@@ -19,7 +19,7 @@ exports.RequestUserLogin = {
 };
 exports.ResponseUserLogin = {
     user: {
-        id: { type: 'string', require },
+        id: { type: 'string' },
         email: { type: 'string' },
         name: { type: 'string' },
     },

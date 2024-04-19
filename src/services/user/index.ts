@@ -1,11 +1,11 @@
 import { hashPassword } from "../../utils/hash";
 import prisma from "../../utils/prisma";
 
-export async function createUser(input: any) {
-    const { password } = input;
+export async function createUser(body: any) {
+    const { password, firstName, lastName, email } = body;
 	const data = {
-		name: `${input.firstName} ${input.lastName}`,
-		email: input.email,
+		name: `${firstName} ${lastName}`,
+		email: email,
 	}
 
     const { hash, salt } = hashPassword(password);

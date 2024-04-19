@@ -1,13 +1,13 @@
-import Fastify, { FastifyRequest, FastifyReply } from "fastify";
-import fjwt, { JWT } from "fastify-jwt";
-import swagger from "fastify-swagger";
-import { withRefResolver } from "fastify-zod";
-import userRoutes from "./controllers/user";
-import eventsRoutes from "./controllers/events";
 
 import * as fs from "fs";
 import * as path from "path";
-import { FastifyPluginAsync } from 'fastify';
+import Fastify, { FastifyRequest, FastifyReply, FastifyPluginAsync } from "fastify";
+import fjwt, { JWT } from "fastify-jwt";
+import swagger from "fastify-swagger";
+import { withRefResolver } from "fastify-zod";
+import env from "dotenv";
+
+env.config();
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -32,7 +32,7 @@ function buildServer() {
   const server = Fastify();
 
   server.register(fjwt, {
-    secret: "5d64e1aa9eff6d100cb0297255fe991082e0fb20418ed8d065a556f328bfbccb",
+    secret: process.env.JWT_SECRET?? process.exit(1),
   });
 
   server.decorate(
@@ -64,8 +64,8 @@ function buildServer() {
       openapi: {
         info: {
           title: "HandyHub APIs",
-          description: "",
-          version: '1.0.0',
+          description: "HandyHub's development API, materia is still in Beta version",
+          version: '0.0.1',
         },
         components: {
           securitySchemes: {
@@ -80,17 +80,12 @@ function buildServer() {
     })
   );
 
-  // server.register(userRoutes, { prefix: "api/users" });
-  // server.register(eventsRoutes, { prefix: "api/events" });
-
-  const controllerPath = path.join(__dirname, "controllers");
-  const controllers = fs.readdirSync(controllerPath);
+  const apiPath = path.join(__dirname, "api");
+  const apis = fs.readdirSync(apiPath);
   
-  controllers.forEach(controller => {
-    const controllerRoutes: FastifyPluginAsync = require(path.join(controllerPath, controller)).default;
-    console.log('router')
-    console.log(controllerRoutes)
-    server.register(controllerRoutes, { prefix: `api/${controller.toLowerCase()}` });
+  apis.forEach(api => {
+    const apiRoutes: FastifyPluginAsync = require(path.join(apiPath, api)).default;
+    server.register(apiRoutes, { prefix: `api/${api.toLowerCase()}` });
   });
  
   return server;
