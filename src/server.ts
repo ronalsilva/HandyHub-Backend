@@ -1,20 +1,26 @@
-import Fastify, { FastifyRequest, FastifyReply } from "fastify";
-import fjwt, { JWT } from "fastify-jwt";
-import swagger from "fastify-swagger";
-import { withRefResolver } from "fastify-zod";
-import userRoutes from "./controllers/user";
-import eventsRoutes from "./controllers/events";
+
+import * as fs from "fs";
+import * as path from "path";
+import Fastify, { FastifyRequest, FastifyReply, FastifyPluginAsync } from "fastify";
+import fjwt, { JWT } from "@fastify/jwt";
+import fastifySwagger  from "@fastify/swagger";
+import fastifySwaggerUi from "@fastify/swagger-ui";
+import env from "dotenv";
+import fastifyOAuth2 from '@fastify/oauth2'; 
+
+env.config();
 
 declare module "fastify" {
   interface FastifyRequest {
     jwt: JWT;
   }
   export interface FastifyInstance {
+    googleOAuth2: GoogleOAuth2Provider;
     authenticate: any;
   }
 }
 
-declare module "fastify-jwt" {
+declare module "@fastify/jwt" {
   interface FastifyJWT {
     user: {
       id: number;
@@ -24,12 +30,58 @@ declare module "fastify-jwt" {
   }
 }
 
+interface GoogleOAuth2Provider {
+  authorizationUri: string;
+  getAccessTokenFromAuthorizationCodeFlow(options: { code: string }): Promise<string>;
+}
+
+const swaggerOptions = {
+  swagger: {
+      info: {
+          title: "HandyHub APIs",
+          description: "My Description.",
+          version: "1.0.0",
+      },
+      components: {
+        securitySchemes: {
+          apiKey: {
+            type: 'apiKey',
+            name: 'authorization',
+            in: 'header'
+          }
+        }
+      },
+      tags: [{ name: "Default", description: "Default" }],
+  },
+};
+
+const swaggerUiOptions = {
+  routePrefix: "/swagger",
+  exposeRoute: true,
+  staticCSP: true,
+};
+
 function buildServer() {
   const server = Fastify();
 
   server.register(fjwt, {
-    secret: "ndkandnan78duy9sau87dbndsa89u7dsy789adb",
+    secret: process.env.JWT_SECRET?? process.exit(1),
   });
+
+  server.register(fastifyOAuth2, {
+    name: 'googleOAuth2',
+    credentials: {
+      client: {
+        id: process.env.GOOGLE_ID?? process.exit(1),
+        secret: process.env.GOOGLE_SECRET?? process.exit(1),
+      },
+      auth: fastifyOAuth2.GOOGLE_CONFIGURATION,
+    },
+    scope: ['profile', 'email'],
+    startRedirectPath: '/auth/google',
+    callbackUri: '/auth/callback',
+  })
+
 
   server.decorate(
     "authenticate",
@@ -51,34 +103,17 @@ function buildServer() {
     return next();
   });
 
-  server.register(
-    swagger,
-    withRefResolver({
-      routePrefix: "/docs",
-      exposeRoute: true,
-      staticCSP: true,
-      openapi: {
-        info: {
-          title: "iHelp APIs",
-          description: "",
-          version: '1.0.0',
-        },
-        components: {
-          securitySchemes: {
-            apiKey: {
-              type: 'apiKey',
-              name: 'authenticate',
-              in: 'header'
-            }
-          }
-        }
-      },
-    })
-  );
+  server.register(fastifySwagger, swaggerOptions);
+  server.register(fastifySwaggerUi, swaggerUiOptions);
 
-  server.register(userRoutes, { prefix: "api/users" });
-  server.register(eventsRoutes, { prefix: "api/events" });
-
+  const apiPath = path.join(__dirname, "api");
+  const apis = fs.readdirSync(apiPath);
+  
+  apis.forEach(api => {
+    const apiRoutes: FastifyPluginAsync = require(path.join(apiPath, api)).default;
+    server.register(apiRoutes, { prefix: `api/${api.toLowerCase()}` });
+  });
+ 
   return server;
 }
 

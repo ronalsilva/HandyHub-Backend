@@ -25,8 +25,10 @@ const hash_1 = require("../../utils/hash");
 const userSchema_1 = require("./schema/userSchema");
 function userRoutes(server) {
     return __awaiter(this, void 0, void 0, function* () {
-        server.post("/", {
+        server.post("/create", {
             schema: {
+                tags: ['User'],
+                summary: 'Create a new user',
                 body: userSchema_1.RequestUser,
                 response: {
                     201: userSchema_1.ResponseUser,
@@ -39,41 +41,63 @@ function userRoutes(server) {
                 return reply.code(201).send(user);
             }
             catch (e) {
-                console.log(e);
-                return reply.code(500).send(e);
+                console.error("Error creating user:", e);
+                return reply.code(500).send({ message: "Internal Server Error" });
             }
         }));
         server.post("/login", {
             schema: {
-                body: userSchema_1.RequestUserLogin,
+                tags: ['User'],
+                summary: 'Login user',
+                body: Object.assign({}, userSchema_1.RequestUserLogin),
                 response: {
-                    200: { accessToken: { type: 'string' } },
+                    200: userSchema_1.ResponseUserLogin,
                 },
             },
         }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
-            const body = request.body;
-            const user = yield (0, user_1.findUserByEmail)(body.email);
-            if (!user) {
-                return reply.code(401).send({ message: "Invalid email or password" });
+            const { email, password } = request.body;
+            try {
+                if (typeof email !== 'string' || typeof password !== 'string') {
+                    return reply.code(400).send({ message: "Invalid email or password format" });
+                }
+                const user = yield (0, user_1.findUserByEmail)(email);
+                if (!user || !(0, hash_1.verifyPassword)({ candidatePassword: password, salt: user.salt, hash: user.password })) {
+                    return reply.code(401).send({ message: "Invalid email or password" });
+                }
+                const { id, name } = user, rest = __rest(user, ["id", "name"]);
+                const accessToken = request.jwt.sign(rest);
+                return { user: { id, name, email }, accessToken };
             }
-            const correctPassword = (0, hash_1.verifyPassword)({
-                candidatePassword: body.password,
-                salt: user.salt,
-                hash: user.password,
-            });
-            if (correctPassword) {
-                const { password, salt } = user, rest = __rest(user, ["password", "salt"]);
-                return { accessToken: request.jwt.sign(rest) };
+            catch (e) {
+                console.error("Error logging in:", e);
+                return reply.code(500).send({ message: "Internal Server Error" });
             }
-            return reply.code(401).send({
-                message: "Invalid email or password",
-            });
         }));
-        server.get("/", {
+        server.get("/:id", {
             preHandler: [server.authenticate],
+            schema: {
+                tags: ['User'],
+                summary: 'Search user',
+                params: {
+                    id: { type: 'number' }
+                },
+                response: {
+                    200: userSchema_1.ResponseUser,
+                },
+            },
         }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
-            const users = yield (0, user_1.findUsers)();
-            return users;
+            const { id } = request.params;
+            try {
+                const user = yield (0, user_1.findUserById)(Number(id));
+                if (!user) {
+                    return reply.code(404).send({ code: 404, message: `User with ID: ${id} was not found` });
+                }
+                return user;
+            }
+            catch (e) {
+                console.error("Error searching user:", e);
+                return reply.code(500).send({ message: "Internal Server Error" });
+            }
         }));
     });
 }

@@ -8,30 +8,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findUsers = exports.findUserByEmail = exports.createUser = void 0;
+exports.findUserById = exports.findUserByEmail = exports.createUser = void 0;
 const hash_1 = require("../../utils/hash");
 const prisma_1 = __importDefault(require("../../utils/prisma"));
 function createUser(input) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { password } = input, rest = __rest(input, ["password"]);
+        const { password } = input;
+        const data = {
+            name: `${input.firstName} ${input.lastName}`,
+            email: input.email,
+        };
         const { hash, salt } = (0, hash_1.hashPassword)(password);
         const user = yield prisma_1.default.user.create({
-            data: Object.assign(Object.assign({}, rest), { salt, password: hash }),
+            data: Object.assign(Object.assign({}, data), { salt, password: hash }),
         });
         return user;
     });
@@ -47,15 +40,14 @@ function findUserByEmail(email) {
     });
 }
 exports.findUserByEmail = findUserByEmail;
-function findUsers() {
+function findUserById(id) {
     return __awaiter(this, void 0, void 0, function* () {
-        return prisma_1.default.user.findMany({
-            select: {
-                email: true,
-                name: true,
-                id: true,
+        let result = yield prisma_1.default.user.findUnique({
+            where: {
+                id: id,
             },
         });
+        return result;
     });
 }
-exports.findUsers = findUsers;
+exports.findUserById = findUserById;
