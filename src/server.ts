@@ -1,11 +1,11 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import Fastify, { FastifyRequest, FastifyReply, FastifyPluginAsync } from "fastify";
+import env from "dotenv";
+import Fastify, { FastifyRequest, FastifyReply, FastifyPluginAsync, FastifyInstance } from "fastify";
 import fjwt, { JWT } from "@fastify/jwt";
 import fastifySwagger  from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
-import env from "dotenv";
 import fastifyOAuth2 from '@fastify/oauth2'; 
 
 env.config();
@@ -20,16 +20,6 @@ declare module "fastify" {
   }
 }
 
-declare module "@fastify/jwt" {
-  interface FastifyJWT {
-    user: {
-      id: number;
-      email: string;
-      name: string;
-    };
-  }
-}
-
 interface GoogleOAuth2Provider {
   authorizationUri: string;
   getAccessTokenFromAuthorizationCodeFlow(options: { code: string }): Promise<string>;
@@ -37,21 +27,19 @@ interface GoogleOAuth2Provider {
 
 const swaggerOptions = {
   swagger: {
-      info: {
-          title: "HandyHub APIs",
-          description: "My Description.",
-          version: "1.0.0",
-      },
-      components: {
-        securitySchemes: {
-          apiKey: {
-            type: 'apiKey',
-            name: 'authorization',
-            in: 'header'
-          }
-        }
-      },
-      tags: [{ name: "Default", description: "Default" }],
+    info: {
+      title: "HandyHub APIs",
+      description: "",
+      version: "1.0.0",
+    },
+    tags: [{ name: "Default", description: "Default" }],
+    securityDefinitions: {
+      apiKey: {
+        type: 'apiKey',
+        name: 'apiKey',
+        in: 'header'
+      }
+    }
   },
 };
 
@@ -61,27 +49,26 @@ const swaggerUiOptions = {
   staticCSP: true,
 };
 
-function buildServer() {
+function buildServer(): FastifyInstance {
   const server = Fastify();
 
   server.register(fjwt, {
-    secret: process.env.JWT_SECRET?? process.exit(1),
+    secret: process.env.JWT_SECRET || "",
   });
 
   server.register(fastifyOAuth2, {
     name: 'googleOAuth2',
     credentials: {
       client: {
-        id: process.env.GOOGLE_ID?? process.exit(1),
-        secret: process.env.GOOGLE_SECRET?? process.exit(1),
+        id: process.env.GOOGLE_ID || "",
+        secret: process.env.GOOGLE_SECRET || "",
       },
       auth: fastifyOAuth2.GOOGLE_CONFIGURATION,
     },
     scope: ['profile', 'email'],
     startRedirectPath: '/auth/google',
     callbackUri: '/auth/callback',
-  })
-
+  });
 
   server.decorate(
     "authenticate",
@@ -89,7 +76,7 @@ function buildServer() {
       try {
         await request.jwtVerify();
       } catch (e) {
-        return reply.send(e);
+        reply.send(e);
       }
     }
   );
@@ -99,8 +86,8 @@ function buildServer() {
   });
 
   server.addHook("preHandler", (req, reply, next) => {
-    req.jwt = server.jwt;
-    return next();
+    req.jwt = server.jwt as JWT;
+    next();
   });
 
   server.register(fastifySwagger, swaggerOptions);

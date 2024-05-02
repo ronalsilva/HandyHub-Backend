@@ -17,7 +17,10 @@ const server = (0, server_1.default)();
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield server.listen(3000, "0.0.0.0");
+            yield server.listen({ port: 3000 }, (err, address) => {
+                if (err)
+                    throw err;
+            });
             console.log(`Server ready at http://localhost:3000`);
         }
         catch (e) {

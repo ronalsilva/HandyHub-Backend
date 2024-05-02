@@ -1,15 +1,30 @@
+import Joi from "joi"
+
 const ResponseUser = {
     id: { type: 'string'},
     email: { type: 'string'},
     name: { type: 'string'},
 }
 
+// const ResponseUser = Joi.object().keys({
+//     id: Joi.string(),
+//     email: Joi.string(),
+//     name: Joi.string(),
+// })
+
 const RequestUser = {
     firstName: { type: 'string'},
-    lastName: { type: 'string'},
+    lastName: { type: 'string',},
     email: { type: 'string'},
     password: { type: 'string'},
 }
+
+// const RequestUser = Joi.object().keys({
+//     firstName: Joi.string().required(),
+//     lastName: Joi.string().required(),
+//     email: Joi.string().required(),
+//     password: Joi.string().required()
+// }).required()
 
 export const SchemaUser = {
     schema: {
@@ -22,30 +37,6 @@ export const SchemaUser = {
     }
 }
 
-//Login
-
-const RequestUserLogin = {
-    email: { type: 'string'},
-    password: { type: 'string'}
-}
-
-const ResponseUserLogin = {
-    user: { ResponseUser },
-    accessToken: { type: 'string'}
-}
-
-
-export const SchemaLogin = {
-    schema: {
-        tags: ['User'],
-        summary: 'Login user',
-        body: RequestUserLogin,
-        response: {
-            200: ResponseUserLogin,
-        },
-    },
-}
-
 // Get user
 
 export const SchemaSaerchUser = {
@@ -55,6 +46,11 @@ export const SchemaSaerchUser = {
         params: {
             id: { type: 'number' }
         },
+        security: [
+            {
+              "apiKey": []
+            }
+        ],
         response: {
             200: ResponseUser,
         },

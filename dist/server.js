@@ -1,7 +1,11 @@
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -33,26 +37,59 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
-const fastify_1 = __importDefault(require("fastify"));
-const fastify_jwt_1 = __importDefault(require("fastify-jwt"));
-const fastify_swagger_1 = __importDefault(require("fastify-swagger"));
-const fastify_zod_1 = require("fastify-zod");
 const dotenv_1 = __importDefault(require("dotenv"));
-// import userRoutes from "./controllers/user";
-// import eventsRoutes from "./controllers/events";
+const fastify_1 = __importDefault(require("fastify"));
+const jwt_1 = __importDefault(require("@fastify/jwt"));
+const swagger_1 = __importDefault(require("@fastify/swagger"));
+const swagger_ui_1 = __importDefault(require("@fastify/swagger-ui"));
+const oauth2_1 = __importDefault(require("@fastify/oauth2"));
 dotenv_1.default.config();
+const swaggerOptions = {
+    swagger: {
+        info: {
+            title: "HandyHub APIs",
+            description: "",
+            version: "1.0.0",
+        },
+        tags: [{ name: "Default", description: "Default" }],
+        securityDefinitions: {
+            apiKey: {
+                type: 'apiKey',
+                name: 'apiKey',
+                in: 'header'
+            }
+        }
+    },
+};
+const swaggerUiOptions = {
+    routePrefix: "/swagger",
+    exposeRoute: true,
+    staticCSP: true,
+};
 function buildServer() {
-    var _a;
     const server = (0, fastify_1.default)();
-    server.register(fastify_jwt_1.default, {
-        secret: (_a = process.env.JWT_SECRET) !== null && _a !== void 0 ? _a : process.exit(1),
+    server.register(jwt_1.default, {
+        secret: process.env.JWT_SECRET || "",
+    });
+    server.register(oauth2_1.default, {
+        name: 'googleOAuth2',
+        credentials: {
+            client: {
+                id: process.env.GOOGLE_ID || "",
+                secret: process.env.GOOGLE_SECRET || "",
+            },
+            auth: oauth2_1.default.GOOGLE_CONFIGURATION,
+        },
+        scope: ['profile', 'email'],
+        startRedirectPath: '/auth/google',
+        callbackUri: '/auth/callback',
     });
     server.decorate("authenticate", (request, reply) => __awaiter(this, void 0, void 0, function* () {
         try {
             yield request.jwtVerify();
         }
         catch (e) {
-            return reply.send(e);
+            reply.send(e);
         }
     }));
     server.get("/healthcheck", function () {
@@ -62,36 +99,15 @@ function buildServer() {
     });
     server.addHook("preHandler", (req, reply, next) => {
         req.jwt = server.jwt;
-        return next();
+        next();
     });
-    server.register(fastify_swagger_1.default, (0, fastify_zod_1.withRefResolver)({
-        routePrefix: "/swagger",
-        exposeRoute: true,
-        staticCSP: true,
-        openapi: {
-            info: {
-                title: "HandyHub APIs",
-                description: "HandyHub's development API, materia is still in Beta version",
-                version: '0.0.1',
-            },
-            components: {
-                securitySchemes: {
-                    apiKey: {
-                        type: 'apiKey',
-                        name: 'authorization',
-                        in: 'header'
-                    }
-                }
-            }
-        },
-    }));
-    // server.register(userRoutes, { prefix: "api/users" });
-    // server.register(eventsRoutes, { prefix: "api/events" });
-    const controllerPath = path.join(__dirname, "controllers");
-    const controllers = fs.readdirSync(controllerPath);
-    controllers.forEach(controller => {
-        const controllerRoutes = require(path.join(controllerPath, controller)).default;
-        server.register(controllerRoutes, { prefix: `api/${controller.toLowerCase()}` });
+    server.register(swagger_1.default, swaggerOptions);
+    server.register(swagger_ui_1.default, swaggerUiOptions);
+    const apiPath = path.join(__dirname, "api");
+    const apis = fs.readdirSync(apiPath);
+    apis.forEach(api => {
+        const apiRoutes = require(path.join(apiPath, api)).default;
+        server.register(apiRoutes, { prefix: `api/${api.toLowerCase()}` });
     });
     return server;
 }

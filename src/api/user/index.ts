@@ -1,7 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { createUser, findUserByEmail, findUserById } from "../../services/user";
-import { verifyPassword } from "../../utils/hash";
-import { SchemaUser, SchemaLogin, SchemaSaerchUser} from './schema/userSchema';
+import { createUser, findUserById } from "../../services/user";
+import { SchemaUser, SchemaSaerchUser} from './schema/userSchema';
 
 async function userRoutes(server: FastifyInstance) {
     server.post("/create", SchemaUser, async (request: FastifyRequest<{ Body: typeof SchemaUser.schema.body }>, reply: FastifyReply) => {
@@ -13,31 +12,6 @@ async function userRoutes(server: FastifyInstance) {
             return reply.code(201).send(user);
         } catch (e) {
             console.error("Error creating user:", e);
-            return reply.code(500).send({ message: "Internal Server Error" });
-        }
-    });
-
-	server.post(
-		"/login", SchemaLogin, async (request: FastifyRequest<{ Body: typeof SchemaLogin.schema.body }>, reply: FastifyReply) => {
-        const { email, password } = request.body;
-
-        try {
-            if (typeof email !== 'string' || typeof password !== 'string') {
-                return reply.code(400).send({ message: "Invalid email or password format" });
-            }
-
-            const user = await findUserByEmail(email);
-
-            if (!user || !verifyPassword({ candidatePassword: password, salt: user.salt, hash: user.password })) {
-                return reply.code(401).send({ message: "Invalid email or password" });
-            }
-
-            const { id, name, ...rest } = user;
-            const accessToken = request.jwt.sign(rest);
-
-            return { user: { id, name, email }, accessToken };
-        } catch (e) {
-            console.error("Error logging in:", e);
             return reply.code(500).send({ message: "Internal Server Error" });
         }
     });

@@ -17,11 +17,13 @@ export async function createUser(body: any) {
 }
 
 export async function findUserByEmail(email: string) {
-	return prisma.user.findUnique({
+	let result =  prisma.user.findUnique({
 		where: {
 			email,
 		},
 	});
+	
+	return result;
 }
 
 export async function findUserById(id: number) {

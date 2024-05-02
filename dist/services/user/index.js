@@ -15,12 +15,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.findUserById = exports.findUserByEmail = exports.createUser = void 0;
 const hash_1 = require("../../utils/hash");
 const prisma_1 = __importDefault(require("../../utils/prisma"));
-function createUser(input) {
+function createUser(body) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { password } = input;
+        const { password, firstName, lastName, email } = body;
         const data = {
-            name: `${input.firstName} ${input.lastName}`,
-            email: input.email,
+            name: `${firstName} ${lastName}`,
+            email: email,
         };
         const { hash, salt } = (0, hash_1.hashPassword)(password);
         const user = yield prisma_1.default.user.create({

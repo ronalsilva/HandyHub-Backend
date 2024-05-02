@@ -29,6 +29,7 @@ async function userRoutes(server: FastifyInstance) {
     });
 
     server.get('/auth/google', { schema: { tags: ['Login'], summary: 'Redirect login with Gmail' } }, async (request: FastifyRequest, reply: FastifyReply) => {
+
         try {
             const authorizationUri = server.googleOAuth2.authorizationUri;
     
