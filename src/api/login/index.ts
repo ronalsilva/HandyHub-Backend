@@ -1,7 +1,10 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { findUserByEmail } from "../../services/user";
+import { findUserByEmail } from "../../services/client/user";
 import { verifyPassword } from "../../utils/hash";
-import { SchemaLogin} from './schema/loginSchema';
+import { SchemaLogin, SchemaLoginGmail} from './schema/loginSchema';
+import { OAuth2Client } from 'google-auth-library';
+import env from "dotenv";
+env.config();
 
 async function userRoutes(server: FastifyInstance) {
 	server.post("/login", SchemaLogin, async (request: FastifyRequest<{ Body: typeof SchemaLogin.schema.body }>, reply: FastifyReply) => {
@@ -28,37 +31,36 @@ async function userRoutes(server: FastifyInstance) {
         }
     });
 
-    server.get('/auth/google', { schema: { tags: ['Login'], summary: 'Redirect login with Gmail' } }, async (request: FastifyRequest, reply: FastifyReply) => {
+    server.post("/login/google", SchemaLoginGmail, async (request: FastifyRequest<{ Body: typeof SchemaLoginGmail.schema.body }>, reply: FastifyReply) => {
+        const { googleToken } = request.body;
+
+        const client = new OAuth2Client({
+            clientId: process.env.GOOGLE_ID || '',
+            clientSecret: process.env.GOOGLE_SECRET || '',
+        });
 
         try {
-            const authorizationUri = server.googleOAuth2.authorizationUri;
-    
-            if (!authorizationUri) {
-                throw new Error('Authorization URI not found');
+            if (typeof googleToken !== 'string') {
+                return reply.code(400).send({ message: "Invalid Google token format" });
             }
-    
-            reply.redirect(authorizationUri);
-        } catch (error) {
-            console.error("Error in Google OAuth2 redirect:", error);
-            reply.code(500).send({ message: "Internal Server Error" });
-        }
-    });    
 
-    server.get('/auth/callback', { schema: { tags: ['Login'], summary: 'Callback login with Gmail' } }, async (request: FastifyRequest<{ Querystring: { code: string } }>, reply: FastifyReply) => {
-        const { code } = request.query;
-        try {
-          const token = await server.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow({
-            code: code as string,
-          });
-    
-          // Aqui você deve enviar a resposta com o token obtido
-          reply.send({ token }); // Verifique se o token está sendo retornado corretamente
-        } catch (error) {
-          console.error("Error in Google OAuth2 callback:", error);
-          reply.code(500).send({ message: "Internal Server Error" });
+            const ticket = await client.verifyIdToken({
+                idToken: googleToken,
+                audience: process.env.GOOGLE_ID || '',
+            });
+
+            const payload = ticket.getPayload();
+            const emailFromGoogle:any = payload?.email;
+
+            const user = await findUserByEmail(emailFromGoogle);
+            if (!user) {
+                console.log("Criar conta")
+            }
+        } catch (e) {
+            console.error("Error logging in with Google:", e);
+            return reply.code(500).send({ message: "Internal Server Error" });
         }
     });
-    
 }
 
 export default userRoutes;

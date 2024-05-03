@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { findUserById } from "../../services/user";
+import { findUserById } from "../../services/client/user";
 
 async function userRoutes(server: FastifyInstance) {
     server.get("/:id", { schema: { tags: ['Worker'], summary: 'Redirect login with Gmail' } }, async (request: FastifyRequest<{ Params: { id: number } }>, reply: FastifyReply) => {

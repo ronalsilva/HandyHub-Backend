@@ -34,7 +34,6 @@ const ResponseUserLogin = {
     accessToken: { type: 'string'}
 }
 
-
 export const SchemaLogin = {
     schema: {
         tags: ['Login'],
@@ -46,17 +45,12 @@ export const SchemaLogin = {
     },
 }
 
-// Get user
-
-export const SchemaSaerchUser = {
+export const SchemaLoginGmail = {
     schema: {
         tags: ['Login'],
-        summary: 'Search user',
-        params: {
-            id: { type: 'number' }
-        },
-        response: {
-            200: ResponseUser,
-        },
+        summary: 'Login user - Gmail',
+        body: { googleToken: {type: 'string'} },
     },
 }
+
+// Get user

@@ -11,14 +11,15 @@ datasource db {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  nome        String
-  email       String   @unique
-  salt        String
-  password    String
-  handyman    Boolean
-  address     Address  @relation(fields: [addressId], references: [id])
-  addressId   Int
+  id                Int      @id @default(autoincrement())
+  firstName         String
+  lastName          String
+  email             String   @unique
+  salt              String
+  password          String
+  handymanstatus    Boolean  @default(false)
+  handymen          Handymen[]
+  address           Address[]
 }
 
 model Address {
@@ -27,5 +28,31 @@ model Address {
   city        String
   province    String
   postalCode  String
-  users       User[]
+  user        User?     @relation(fields: [userId], references: [id])
+  userId      Int?
+}
+
+model Handymen {
+  id          Int      @id @default(autoincrement())
+  description String
+  phoneNumber String
+  user        User     @relation(fields: [idUser], references: [id])
+  idUser      Int
+  workStatus  String
+  service     Service[]
+}
+
+model Service {
+  id              Int      @id @default(autoincrement())
+  description     String
+  price           Float
+  typeService     String
+  image           String
+  handymen        Handymen @relation(fields: [handymenId], references: [id])
+  handymenId      Int
+}
+
+model TipoServico {
+  id          Int      @id @default(autoincrement())
+  name        String
 }

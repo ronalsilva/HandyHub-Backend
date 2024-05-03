@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SchemaSaerchUser = exports.SchemaLogin = exports.SchemaUser = void 0;
+exports.SchemaLoginGmail = exports.SchemaLogin = exports.SchemaUser = void 0;
 const ResponseUser = {
     id: { type: 'string' },
     email: { type: 'string' },
@@ -41,16 +41,11 @@ exports.SchemaLogin = {
         },
     },
 };
-// Get user
-exports.SchemaSaerchUser = {
+exports.SchemaLoginGmail = {
     schema: {
         tags: ['Login'],
-        summary: 'Search user',
-        params: {
-            id: { type: 'number' }
-        },
-        response: {
-            200: ResponseUser,
-        },
+        summary: 'Login user - Gmail',
+        body: { googleToken: { type: 'string' } },
     },
 };
+// Get user
