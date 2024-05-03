@@ -25,16 +25,7 @@ const hash_1 = require("../../utils/hash");
 const userSchema_1 = require("./schema/userSchema");
 function userRoutes(server) {
     return __awaiter(this, void 0, void 0, function* () {
-        server.post("/create", {
-            schema: {
-                tags: ['User'],
-                summary: 'Create a new user',
-                body: userSchema_1.RequestUser,
-                response: {
-                    201: userSchema_1.ResponseUser,
-                },
-            },
-        }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
+        server.post("/create", userSchema_1.SchemaUser, (request, reply) => __awaiter(this, void 0, void 0, function* () {
             const body = request.body;
             try {
                 const user = yield (0, user_1.createUser)(body);
@@ -45,16 +36,7 @@ function userRoutes(server) {
                 return reply.code(500).send({ message: "Internal Server Error" });
             }
         }));
-        server.post("/login", {
-            schema: {
-                tags: ['User'],
-                summary: 'Login user',
-                body: Object.assign({}, userSchema_1.RequestUserLogin),
-                response: {
-                    200: userSchema_1.ResponseUserLogin,
-                },
-            },
-        }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
+        server.post("/login", userSchema_1.SchemaLogin, (request, reply) => __awaiter(this, void 0, void 0, function* () {
             const { email, password } = request.body;
             try {
                 if (typeof email !== 'string' || typeof password !== 'string') {
@@ -73,19 +55,7 @@ function userRoutes(server) {
                 return reply.code(500).send({ message: "Internal Server Error" });
             }
         }));
-        server.get("/:id", {
-            preHandler: [server.authenticate],
-            schema: {
-                tags: ['User'],
-                summary: 'Search user',
-                params: {
-                    id: { type: 'number' }
-                },
-                response: {
-                    200: userSchema_1.ResponseUser,
-                },
-            },
-        }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
+        server.get("/:id", Object.assign({ preHandler: [server.authenticate] }, userSchema_1.SchemaSaerchUser), (request, reply) => __awaiter(this, void 0, void 0, function* () {
             const { id } = request.params;
             try {
                 const user = yield (0, user_1.findUserById)(Number(id));

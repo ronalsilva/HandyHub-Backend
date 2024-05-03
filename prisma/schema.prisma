@@ -10,31 +10,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id Int @id @default(autoincrement())
-  email String @unique
-  name String?
-  salt String
-  password String
+  id                Int      @id @default(autoincrement())
+  firstName         String
+  lastName          String
+  email             String   @unique
+  salt              String
+  password          String
+  handymanstatus    Boolean  @default(false)
+  handymen          Handymen[]
+  address           Address[]
 }
 
-// model User {
-//   id Int @id @default(autoincrement())
-//   email String @unique
-//   name String?
-//   password String
-//   salt String
-//   products Product[]
-// }
+model Address {
+  id          Int      @id @default(autoincrement())
+  address     String
+  city        String
+  province    String
+  postalCode  String
+  user        User?     @relation(fields: [userId], references: [id])
+  userId      Int?
+}
 
-// model Product {
-//   id Int @id @default(autoincrement())
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-//   title String @db.VarChar(255)
-//   content String?
-//   price Float
-//   owner User @relation(fields: [ownerId], references: [id])
-//   ownerId Int
-// }
+model Handymen {
+  id          Int      @id @default(autoincrement())
+  description String
+  phoneNumber String
+  user        User     @relation(fields: [idUser], references: [id])
+  idUser      Int
+  workStatus  String
+  service     Service[]
+}
+
+model Service {
+  id              Int      @id @default(autoincrement())
+  description     String
+  price           Float
+  typeService     String
+  image           String
+  handymen        Handymen @relation(fields: [handymenId], references: [id])
+  handymenId      Int
+}
+
+model TipoServico {
+  id          Int      @id @default(autoincrement())
+  name        String
+}

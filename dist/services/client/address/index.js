@@ -12,42 +12,39 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findUserById = exports.findUserByEmail = exports.createUser = void 0;
-const hash_1 = require("../../utils/hash");
-const prisma_1 = __importDefault(require("../../utils/prisma"));
-function createUser(body) {
+exports.updateAddress = exports.registerAddress = void 0;
+const prisma_1 = __importDefault(require("../../../utils/prisma"));
+function registerAddress(body) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { password, firstName, lastName, email } = body;
+        const { address, city, province, postalcode, userid } = body;
         const data = {
-            name: `${firstName} ${lastName}`,
-            email: email,
+            address,
+            city,
+            province,
+            postalCode: postalcode,
+            userId: userid
         };
-        const { hash, salt } = (0, hash_1.hashPassword)(password);
-        const user = yield prisma_1.default.user.create({
-            data: Object.assign(Object.assign({}, data), { salt, password: hash }),
+        const addressUser = yield prisma_1.default.address.create({
+            data
         });
-        return user;
+        return addressUser;
     });
 }
-exports.createUser = createUser;
-function findUserByEmail(email) {
+exports.registerAddress = registerAddress;
+function updateAddress(body) {
     return __awaiter(this, void 0, void 0, function* () {
-        return prisma_1.default.user.findUnique({
-            where: {
-                email,
-            },
+        const { address, city, province, postalcode, id } = body;
+        const data = {
+            address,
+            city,
+            province,
+            postalCode: postalcode
+        };
+        const addressUser = yield prisma_1.default.address.update({
+            where: { id },
+            data
         });
+        return addressUser;
     });
 }
-exports.findUserByEmail = findUserByEmail;
-function findUserById(id) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let result = yield prisma_1.default.user.findUnique({
-            where: {
-                id: id,
-            },
-        });
-        return result;
-    });
-}
-exports.findUserById = findUserById;
+exports.updateAddress = updateAddress;

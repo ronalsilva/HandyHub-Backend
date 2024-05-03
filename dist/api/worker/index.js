@@ -8,25 +8,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const server_1 = __importDefault(require("./server"));
-const server = (0, server_1.default)();
-function main() {
+const user_1 = require("../../services/client/user");
+function userRoutes(server) {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield server.listen({ port: 3000 }, (err, address) => {
-                if (err)
-                    throw err;
-            });
-            console.log(`Server ready at http://localhost:3000`);
-        }
-        catch (e) {
-            console.error(e);
-            process.exit(1);
-        }
+        server.get("/:id", { schema: { tags: ['Worker'], summary: 'Redirect login with Gmail' } }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
+            const { id } = request.params;
+            try {
+                const user = yield (0, user_1.findUserById)(Number(id));
+                if (!user) {
+                    return reply.code(404).send({ code: 404, message: `User with ID: ${id} was not found` });
+                }
+                return user;
+            }
+            catch (e) {
+                console.error("Error searching user:", e);
+                return reply.code(500).send({ message: "Internal Server Error" });
+            }
+        }));
     });
 }
-main();
+exports.default = userRoutes;

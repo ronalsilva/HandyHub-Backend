@@ -1,38 +1,73 @@
-import Fastify, { FastifyRequest, FastifyReply } from "fastify";
-import fjwt, { JWT } from "fastify-jwt";
-import swagger from "fastify-swagger";
-import { withRefResolver } from "fastify-zod";
-import userRoutes from "./controllers/user";
-import eventsRoutes from "./controllers/events";
 
 import * as fs from "fs";
 import * as path from "path";
-import { FastifyPluginAsync } from 'fastify';
+import env from "dotenv";
+import Fastify, { FastifyRequest, FastifyReply, FastifyPluginAsync, FastifyInstance } from "fastify";
+import fjwt, { JWT } from "@fastify/jwt";
+import fastifySwagger  from "@fastify/swagger";
+import fastifySwaggerUi from "@fastify/swagger-ui";
+import fastifyOAuth2 from '@fastify/oauth2'; 
+
+env.config();
 
 declare module "fastify" {
   interface FastifyRequest {
     jwt: JWT;
   }
   export interface FastifyInstance {
+    googleOAuth2: GoogleOAuth2Provider;
     authenticate: any;
   }
 }
 
-declare module "fastify-jwt" {
-  interface FastifyJWT {
-    user: {
-      id: number;
-      email: string;
-      name: string;
-    };
-  }
+interface GoogleOAuth2Provider {
+  authorizationUri: string;
+  getAccessTokenFromAuthorizationCodeFlow(options: { code: string }): Promise<string>;
 }
 
-function buildServer() {
+const swaggerOptions = {
+  swagger: {
+    info: {
+      title: "HandyHub APIs",
+      description: "",
+      version: "1.0.0",
+    },
+    tags: [{ name: "Default", description: "Default" }],
+    securityDefinitions: {
+      apiKey: {
+        type: 'apiKey',
+        name: 'apiKey',
+        in: 'header'
+      }
+    }
+  },
+};
+
+const swaggerUiOptions = {
+  routePrefix: "/swagger",
+  exposeRoute: true,
+  staticCSP: true,
+};
+
+function buildServer(): FastifyInstance {
   const server = Fastify();
 
   server.register(fjwt, {
-    secret: "5d64e1aa9eff6d100cb0297255fe991082e0fb20418ed8d065a556f328bfbccb",
+    secret: process.env.JWT_SECRET || "",
+  });
+
+  server.register(fastifyOAuth2, {
+    name: 'googleOAuth2',
+    credentials: {
+      client: {
+        id: process.env.GOOGLE_ID || "",
+        secret: process.env.GOOGLE_SECRET || "",
+      },
+      auth: fastifyOAuth2.GOOGLE_CONFIGURATION,
+    },
+    scope: ['profile', 'email'],
+    startRedirectPath: '/auth/google',
+    callbackUri: '/auth/callback',
   });
 
   server.decorate(
@@ -41,7 +76,7 @@ function buildServer() {
       try {
         await request.jwtVerify();
       } catch (e) {
-        return reply.send(e);
+        reply.send(e);
       }
     }
   );
@@ -51,46 +86,19 @@ function buildServer() {
   });
 
   server.addHook("preHandler", (req, reply, next) => {
-    req.jwt = server.jwt;
-    return next();
+    req.jwt = server.jwt as JWT;
+    next();
   });
 
-  server.register(
-    swagger,
-    withRefResolver({
-      routePrefix: "/swagger",
-      exposeRoute: true,
-      staticCSP: true,
-      openapi: {
-        info: {
-          title: "HandyHub APIs",
-          description: "",
-          version: '1.0.0',
-        },
-        components: {
-          securitySchemes: {
-            apiKey: {
-              type: 'apiKey',
-              name: 'authorization',
-              in: 'header'
-            }
-          }
-        }
-      },
-    })
-  );
+  server.register(fastifySwagger, swaggerOptions);
+  server.register(fastifySwaggerUi, swaggerUiOptions);
 
-  // server.register(userRoutes, { prefix: "api/users" });
-  // server.register(eventsRoutes, { prefix: "api/events" });
-
-  const controllerPath = path.join(__dirname, "controllers");
-  const controllers = fs.readdirSync(controllerPath);
+  const apiPath = path.join(__dirname, "api");
+  const apis = fs.readdirSync(apiPath);
   
-  controllers.forEach(controller => {
-    const controllerRoutes: FastifyPluginAsync = require(path.join(controllerPath, controller)).default;
-    console.log('router')
-    console.log(controllerRoutes)
-    server.register(controllerRoutes, { prefix: `api/${controller.toLowerCase()}` });
+  apis.forEach(api => {
+    const apiRoutes: FastifyPluginAsync = require(path.join(apiPath, api)).default;
+    server.register(apiRoutes, { prefix: `api/${api.toLowerCase()}` });
   });
  
   return server;

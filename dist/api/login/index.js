@@ -19,42 +19,19 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const user_1 = require("../../services/user");
+const user_1 = require("../../services/client/user");
 const hash_1 = require("../../utils/hash");
-const userSchema_1 = require("./schema/userSchema");
+const loginSchema_1 = require("./schema/loginSchema");
+const google_auth_library_1 = require("google-auth-library");
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 function userRoutes(server) {
     return __awaiter(this, void 0, void 0, function* () {
-        server.post("/create", {
-            schema: {
-                tags: ['User'],
-                summary: 'Create a new user',
-                body: userSchema_1.RequestUser,
-                response: {
-                    201: userSchema_1.ResponseUser,
-                },
-            },
-        }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
-            const body = request.body;
-            try {
-                const user = yield (0, user_1.createUser)(body);
-                return reply.code(201).send(user);
-            }
-            catch (e) {
-                console.error("Error creating user:", e);
-                return reply.code(500).send({ message: "Internal Server Error" });
-            }
-        }));
-        server.post("/login", {
-            schema: {
-                tags: ['User'],
-                summary: 'Login user',
-                body: Object.assign({}, userSchema_1.RequestUserLogin),
-                response: {
-                    200: userSchema_1.ResponseUserLogin,
-                },
-            },
-        }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
+        server.post("/login", loginSchema_1.SchemaLogin, (request, reply) => __awaiter(this, void 0, void 0, function* () {
             const { email, password } = request.body;
             try {
                 if (typeof email !== 'string' || typeof password !== 'string') {
@@ -73,29 +50,29 @@ function userRoutes(server) {
                 return reply.code(500).send({ message: "Internal Server Error" });
             }
         }));
-        server.get("/:id", {
-            preHandler: [server.authenticate],
-            schema: {
-                tags: ['User'],
-                summary: 'Search user',
-                params: {
-                    id: { type: 'number' }
-                },
-                response: {
-                    200: userSchema_1.ResponseUser,
-                },
-            },
-        }, (request, reply) => __awaiter(this, void 0, void 0, function* () {
-            const { id } = request.params;
+        server.post("/login/google", loginSchema_1.SchemaLoginGmail, (request, reply) => __awaiter(this, void 0, void 0, function* () {
+            const { googleToken } = request.body;
+            const client = new google_auth_library_1.OAuth2Client({
+                clientId: process.env.GOOGLE_ID || '',
+                clientSecret: process.env.GOOGLE_SECRET || '',
+            });
             try {
-                const user = yield (0, user_1.findUserById)(Number(id));
-                if (!user) {
-                    return reply.code(404).send({ code: 404, message: `User with ID: ${id} was not found` });
+                if (typeof googleToken !== 'string') {
+                    return reply.code(400).send({ message: "Invalid Google token format" });
                 }
-                return user;
+                const ticket = yield client.verifyIdToken({
+                    idToken: googleToken,
+                    audience: process.env.GOOGLE_ID || '',
+                });
+                const payload = ticket.getPayload();
+                const emailFromGoogle = payload === null || payload === void 0 ? void 0 : payload.email;
+                const user = yield (0, user_1.findUserByEmail)(emailFromGoogle);
+                if (!user) {
+                    console.log("Criar conta");
+                }
             }
             catch (e) {
-                console.error("Error searching user:", e);
+                console.error("Error logging in with Google:", e);
                 return reply.code(500).send({ message: "Internal Server Error" });
             }
         }));

@@ -10,8 +10,7 @@ I choose to implement a database as a test, and use prism to facilitate communic
 | Prisma |
 | Docker |
 | Jest |
-| TypeScript | 
-| node ts cache |
+| TypeScript |
 
 
 ## Architecture
@@ -86,19 +85,11 @@ npm run start
 
 ## Swagger
 
-After starting the project, you can open the swagger on the route - http://localhost:3000/docs
-
+After starting the project, you can open the swagger on the route - http://localhost:3000/swagger
+<!-- 
 ## ENV
 
 ```sh
 DATABASE_URL="postgresql://postgres:admin@localhost:5432/database"
 TICKETMASTER_KEY="4sKN9vuw7fEwxb65GLA2bYLSXkDC7FR9"
-```
-
-## Some points for improvement
-
-- we can create a logic to create the routes automatically, which is currently being done by placing a manuante on the server. 
-
-- Improve the coverage of the application, and in the future implement a feature test.
-
-- Create a status code status, which currently only returns some errors, not all scenarios.
+``` -->
