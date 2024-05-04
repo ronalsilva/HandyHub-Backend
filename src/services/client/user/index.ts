@@ -2,30 +2,30 @@ import { Prisma } from "@prisma/client";
 import { hashPassword } from "../../../utils/hash";
 import prisma from "../../../utils/prisma";
 
-export async function createUser(body: Prisma.UserUncheckedCreateInput): Promise<any> {
-    const { password, firstName, lastName, email } = body;
-    let result;
-    const data = {
-        name: `${firstName} ${lastName}`,
-        email: email,
-    }
-    
+export async function createUser(body: Prisma.UserCreateInput): Promise<any> {
+    const { password, first_name, last_name, email } = body;
+
     const { hash, salt } = hashPassword(password);
 
     try {
-        result = await prisma.user.create({
-            data: { ...data, salt, password: hash },
+        const user = await prisma.user.create({
+            data: { first_name, last_name, email, salt, password: hash },
+            select: { id: true, first_name: true, last_name: true, email: true }
         });
-        
-    } catch (error:any) {
-        if(error instanceof Prisma.PrismaClientKnownRequestError) {
-            if(error.code === 'P2002') {
-                console.log(error)
-            }
-        }
-    }
 
-    return result;
+        return user;
+    } catch (error:any) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            return { 
+                code: 400, 
+                error: "BAD_REQUREST",
+                message: `the ${error.meta?.target || ''} field already exist` 
+            };
+        }
+
+        console.error("Erro ao criar usuário:", error);
+        return { code: 500, message: "Ocorreu um erro ao criar o usuário." };
+    }
 }
 
 export async function findUserByEmail(email: string): Promise<any>  {

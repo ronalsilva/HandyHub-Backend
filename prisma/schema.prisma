@@ -11,48 +11,62 @@ datasource db {
 }
 
 model User {
-  id                Int      @id @default(autoincrement())
-  firstName         String
-  lastName          String
-  email             String   @unique
-  salt              String
-  password          String
-  handymanstatus    Boolean  @default(false)
-  handymen          Handymen[]
-  address           Address[]
+  id              Int       @id @default(autoincrement())
+  first_name      String
+  last_name       String
+  email           String    @unique
+  password        String
+  salt            String?
+  handyman_status Boolean   @default(false)
+  address         Address[]
+  handymen        Handymen[]
+  serviceRequest  ServiceRequest[]
 }
 
 model Address {
   id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     Int
   address     String
   city        String
   province    String
-  postalCode  String
-  user        User?     @relation(fields: [userId], references: [id])
-  userId      Int?
+  postal_code String
 }
 
 model Handymen {
-  id          Int      @id @default(autoincrement())
-  description String
-  phoneNumber String
-  user        User     @relation(fields: [idUser], references: [id])
-  idUser      Int
-  workStatus  String
-  service     Service[]
+  id               Int      @id @default(autoincrement())
+  user_id          Int
+  user             User     @relation(fields: [user_id], references: [id])
+  description      String
+  phone            String   @unique
+  document         Boolean
+  servicesHandyman ServicesHandyman[]
 }
 
-model Service {
-  id              Int      @id @default(autoincrement())
-  description     String
-  price           Float
-  typeService     String
-  image           String
-  handymen        Handymen @relation(fields: [handymenId], references: [id])
-  handymenId      Int
+model ServicesHandyman {
+  id               Int         @id @default(autoincrement())
+  service_list_id  Int
+  service_list     ServiceList @relation(fields: [service_list_id], references: [id])
+  handymen_id      Int
+  handymen         Handymen    @relation(fields: [handymen_id], references: [id])
+  description      String
+  price            String
+  serviceRequest   ServiceRequest[]
 }
 
-model TipoServico {
-  id          Int      @id @default(autoincrement())
-  name        String
+model ServiceList {
+  id               Int     @id @default(autoincrement())
+  name             String
+  servicesHandyman ServicesHandyman[]
+}
+
+model ServiceRequest {
+  id                  Int      @id @default(autoincrement())
+  user_id             Int
+  user                User     @relation(fields: [user_id], references: [id])
+  service_handyman_id Int
+  service_handyman    ServicesHandyman @relation(fields: [service_handyman_id], references: [id])
+  chat_id             Int
+  status              String
+  date                DateTime
 }

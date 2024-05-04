@@ -8,8 +8,7 @@
     "test": "jest --coverage --forceExit --detectOpenHandles --maxWorkers=10",
     "start": "node dist/app.js",
     "build": "tsc --skipLibCheck",
-    "db": "npx prisma db push",
-    "db:types": "npx prisma generate"
+    "db": "npx prisma db push & npx prisma generate"
   },
   "dependencies": {
     "@faker-js/faker": "^6.0.0-beta.0",

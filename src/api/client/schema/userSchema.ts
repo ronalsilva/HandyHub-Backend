@@ -5,17 +5,62 @@ export const SchemaUser = {
         tags: ['User'],
         summary: 'Create a new user',
         body: {
-            firstName: { type: 'string'},
-            lastName: { type: 'string',},
-            email: { type: 'string'},
-            password: { type: 'string'},
+            type: 'object',
+            properties: {
+                user: {
+                    type: 'object',
+                    required: ['email', 'first_name', 'last_name', 'password'],
+                    properties: {
+                        first_name: { type: 'string'},
+                        last_name: { type: 'string'},
+                        email: { type: 'string'},
+                        password: { type: 'string'},
+                    }
+                },
+                address: {
+                    type: 'object',
+                    required: ['address', 'city', 'province', 'postal_code'],
+                    properties: {
+                        address: { type: 'string' },
+                        city: { type: 'string' },
+                        province: { type: 'string' },
+                        postal_code: { type: 'string' }
+                    }
+                }
+            }
         },
         response: {
             201: {
-                id: { type: 'string'},
-                email: { type: 'string'},
-                name: { type: 'string'},
+                user: {
+                    type: 'object',
+                    required: ['email'],
+                    properties: {
+                        id: { type: 'string' },
+                        first_name: { type: 'string'},
+                        last_name: { type: 'string'},
+                        email: { type: 'string'},
+                    }
+                },
+                address: {
+                    type: 'object',
+                    properties: {
+                        address: { type: 'string' },
+                        city: { type: 'string' },
+                        province: { type: 'string' },
+                        postal_code: { type: 'string' }
+                    }
+                }
             },
+            404: {
+                statusCode: { type: 'string' },
+                code: { type: 'string' },
+                error: { type: 'string' },
+                message: { type: 'string' },            
+            },
+            500: {
+                code: { type: 'string' },
+                mensage: { type: 'string' },
+            }
         },
     }
 }
@@ -35,10 +80,11 @@ export const SchemaSaerchUser = {
             }
         ],
         response: {
-            200: {
+            201: {
                 id: { type: 'string'},
                 email: { type: 'string'},
-                name: { type: 'string'},
+                first_name: { type: 'string'},
+                last_name: { type: 'string'},
             },
         },
     },

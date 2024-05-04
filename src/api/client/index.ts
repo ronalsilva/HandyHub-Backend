@@ -2,27 +2,28 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { createUser, findUserById } from "../../services/client/user";
 import { registerAddress, updateAddress } from "../../services/client/address";
 import { SchemaUser, SchemaSaerchUser, SchemaCreateAddress, SchemaUpdateAddress} from './schema/userSchema';
+import { Prisma } from "@prisma/client";
 
 async function userRoutes(server: FastifyInstance) {
     server.post("/create", SchemaUser, async (request: FastifyRequest<{ Body: typeof SchemaUser.schema.body }>, reply: FastifyReply) => {
-        const body = request.body;
+        const body:any = request.body;
 
-        try {
-            const user = await createUser(body);
+        const userData = body.user;
+        const userAddress = body.address;
 
-            return reply.code(201).send(user);
-        } catch (e:any) {
+        const user = await createUser(userData);
 
-            if(e.code === "ERR_INVALID_ARG_TYPE") {
-                return reply.code(400).send({ message: e.message })
-            }
-            console.error("Error creating user:", e);
-            return reply.code(500).send({ message: "Internal error" });
+        if(user.code === 400) {
+            return reply.code(user.code).send(user);
         }
+
+        const address = await registerAddress({ ...userAddress, user: user.id });
+
+        return reply.send({user, address});
     });
 
     server.post("/address", SchemaCreateAddress, async (request: FastifyRequest<{ Body: typeof SchemaCreateAddress.schema.body }>, reply: FastifyReply) => {
-        const body = request.body;
+        const body:any = request.body;
 
         try {
             const user = await registerAddress(body);
