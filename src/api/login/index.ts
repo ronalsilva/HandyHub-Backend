@@ -9,22 +9,24 @@ env.config();
 async function userRoutes(server: FastifyInstance) {
 	server.post("/login", SchemaLogin, async (request: FastifyRequest<{ Body: typeof SchemaLogin.schema.body }>, reply: FastifyReply) => {
         const { email, password } = request.body;
+        const email_req = email;
 
         try {
-            if (typeof email !== 'string' || typeof password !== 'string') {
+            if (typeof email_req !== 'string' || typeof password !== 'string') {
                 return reply.code(400).send({ message: "Invalid email or password format" });
             }
 
-            const user = await findUserByEmail(email);
+            const user = await findUserByEmail(email_req);
+
 
             if (!user || !verifyPassword({ candidatePassword: password, salt: user.salt, hash: user.password })) {
-                return reply.code(401).send({ message: "Invalid email or password" });
+                return reply.code(401).send({ code: '401', error: 'UNAUTHORIZED', message: "Invalid email or password" });
             }
 
-            const { id, name, ...rest } = user;
+            const { id, first_name, last_name, email, handyman_status, ...rest } = user;
             const accessToken = request.jwt.sign(rest);
 
-            return { user: { id, name, email }, accessToken };
+            return { user: { id, first_name, last_name, email, handyman_status }, accessToken };
         } catch (e) {
             console.error("Error logging in:", e);
             return reply.code(500).send({ message: "Internal Server Error" });

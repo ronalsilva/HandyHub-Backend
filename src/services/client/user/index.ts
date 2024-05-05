@@ -33,6 +33,7 @@ export async function findUserByEmail(email: string): Promise<any>  {
         where: {
             email,
         },
+        // select: { email: true, first_name: true, last_name: true, id: true }
     });
 }
 

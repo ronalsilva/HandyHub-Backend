@@ -2,7 +2,6 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { createUser, findUserById } from "../../services/client/user";
 import { registerAddress, updateAddress } from "../../services/client/address";
 import { SchemaUser, SchemaSaerchUser, SchemaCreateAddress, SchemaUpdateAddress} from './schema/userSchema';
-import { Prisma } from "@prisma/client";
 
 async function userRoutes(server: FastifyInstance) {
     server.post("/create", SchemaUser, async (request: FastifyRequest<{ Body: typeof SchemaUser.schema.body }>, reply: FastifyReply) => {

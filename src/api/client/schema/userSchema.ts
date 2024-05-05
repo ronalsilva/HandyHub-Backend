@@ -52,7 +52,11 @@ export const SchemaUser = {
                 }
             },
             404: {
-                statusCode: { type: 'string' },
+                code: { type: 'string' },
+                error: { type: 'string' },
+                message: { type: 'string' },            
+            },
+            400: {
                 code: { type: 'string' },
                 error: { type: 'string' },
                 message: { type: 'string' },            

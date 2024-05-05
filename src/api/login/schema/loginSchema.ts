@@ -1,46 +1,47 @@
-const ResponseUser = {
-    id: { type: 'string'},
-    email: { type: 'string'},
-    name: { type: 'string'},
-}
-
-const RequestUser = {
-    firstName: { type: 'string'},
-    lastName: { type: 'string'},
-    email: { type: 'string'},
-    password: { type: 'string'},
-}
-
 export const SchemaUser = {
     schema: {
         tags: ['Login'],
         summary: 'Create a new user',
-        body: RequestUser,
+        body: {
+            firstName: { type: 'string'},
+            lastName: { type: 'string'},
+            email: { type: 'string'},
+            password: { type: 'string'},
+        },
         response: {
-            201: ResponseUser,
+            201: {
+                id: { type: 'string'},
+                email: { type: 'string'},
+                name: { type: 'string'},
+            },
         },
     }
 }
 
 //Login
 
-const RequestUserLogin = {
-    email: { type: 'string'},
-    password: { type: 'string'}
-}
-
-const ResponseUserLogin = {
-    user: { ResponseUser },
-    accessToken: { type: 'string'}
-}
-
 export const SchemaLogin = {
     schema: {
         tags: ['Login'],
         summary: 'Login user',
-        body: RequestUserLogin,
+        body: {
+            email: { type: 'string'},
+            password: { type: 'string'}
+        },
         response: {
-            200: ResponseUserLogin,
+            200: {
+                user: { 
+                    type: 'object',
+                    properties: {
+                        id: { type: 'string' },
+                        first_name: { type: 'string' },
+                        last_name: { type: 'string' },
+                        email: { type: 'string' },
+                        handyman_status: { type: 'boolean' }
+                    },
+                 },
+                accessToken: { type: 'string'}
+            },
         },
     },
 }
@@ -52,5 +53,3 @@ export const SchemaLoginGmail = {
         body: { googleToken: {type: 'string'} },
     },
 }
-
-// Get user

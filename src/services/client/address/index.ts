@@ -6,13 +6,17 @@ export async function registerAddress(body: Prisma.AddressCreateInput) {
     let result;
     
     try {
+        if (typeof user !== 'number') {
+            throw new Error('The user ID must be a number.');
+        }
+
         result = await prisma.address.create({
             data: {
                 address,
                 city,
                 province,
                 postal_code: postal_code,
-                user_id: user
+                user: { connect: { id: user } }
             }
         });
         
@@ -24,8 +28,6 @@ export async function registerAddress(body: Prisma.AddressCreateInput) {
             }
         }
     }
-
-    console.log(result)
 
     return result;
 }
